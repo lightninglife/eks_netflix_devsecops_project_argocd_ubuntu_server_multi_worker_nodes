@@ -1,0 +1,68 @@
+resource "kubernetes_ingress_v1" "argocd_ingress" {
+  depends_on = [helm_release.loadbalancer_controller, kubernetes_ingress_class_v1.ingress_class_default]
+  metadata {
+
+    
+    name      = var.kubernetes_ingress_v1_argocd_ingress_metadata_name # "argocd-server"
+    namespace = var.kubernetes_ingress_v1_argocd_ingress_metadata_namespace # "argocd"
+    labels = {
+      "${var.kubernetes_ingress_v1_argocd_ingress_labels_name_argocd_server}" = var.kubernetes_ingress_v1_argocd_ingress_labels_value_argocd_server # "app.kubernetes.io/name" = "argocd-server" 
+    }
+    annotations = {
+      "${var.kubernetes_ingress_v1_argocd_ingress_annotations_ingress_class}" = var.kubernetes_ingress_v1_argocd_ingress_annotations_ingress_class_value # "kubernetes.io/ingress.class" = "alb"
+      "${var.kubernetes_ingress_v1_argocd_ingress_annotations_load_balancer_name}" = var.kubernetes_ingress_v1_argocd_ingress_annotations_load_balancer_name_value # "alb.ingress.kubernetes.io/load-balancer-name" = "argocd"
+      "${var.kubernetes_ingress_v1_argocd_ingress_annotations_backend_protocol}" = var.kubernetes_ingress_v1_argocd_ingress_annotations_backend_protocol_value # "alb.ingress.kubernetes.io/backend-protocol": "HTTP"
+      "${var.kubernetes_ingress_v1_argocd_ingress_annotations_scheme}" = var.kubernetes_ingress_v1_argocd_ingress_annotations_scheme_value # "alb.ingress.kubernetes.io/scheme"             = "internet-facing"
+      "${var.kubernetes_ingress_v1_argocd_ingress_annotations_healthcheck_protocol}" = var.kubernetes_ingress_v1_argocd_ingress_annotations_healthcheck_protocol_value # "alb.ingress.kubernetes.io/healthcheck-protocol" =  "HTTP"
+      "${var.kubernetes_ingress_v1_argocd_ingress_annotations_healthcheck_port}" = var.kubernetes_ingress_v1_argocd_ingress_annotations_healthcheck_port_value # "alb.ingress.kubernetes.io/healthcheck-port"   = "traffic-port"
+      "${var.kubernetes_ingress_v1_argocd_ingress_annotations_healthcheck_path}" = var.kubernetes_ingress_v1_argocd_ingress_annotations_healthcheck_path_value # "alb.ingress.kubernetes.io/healthcheck-path"   = "/"
+      # "alb.ingress.kubernetes.io/target-type"        = "ip"
+      "${var.kubernetes_ingress_v1_argocd_ingress_annotations_force_ssl_redirect}" = var.kubernetes_ingress_v1_argocd_ingress_annotations_force_ssl_redirect_value # "alb.ingress.kubernetes.io/force-ssl-redirect" = "false"
+      "${var.kubernetes_ingress_v1_argocd_ingress_annotations_healthcheck_interval_seconds}" = var.kubernetes_ingress_v1_argocd_ingress_annotations_healthcheck_interval_seconds_value # "alb.ingress.kubernetes.io/healthcheck-interval-seconds" = 15
+      "${var.kubernetes_ingress_v1_argocd_ingress_annotations_healthcheck_timeout_seconds}" = var.kubernetes_ingress_v1_argocd_ingress_annotations_healthcheck_timeout_seconds_value # "alb.ingress.kubernetes.io/healthcheck-timeout-seconds"  = 5
+      "${var.kubernetes_ingress_v1_argocd_ingress_annotations_success_codes}" = var.kubernetes_ingress_v1_argocd_ingress_annotations_success_codes_value # "alb.ingress.kubernetes.io/success-codes"      = 200
+      "${var.kubernetes_ingress_v1_argocd_ingress_annotations_healthy_threshold_count}" = var.kubernetes_ingress_v1_argocd_ingress_annotations_healthy_threshold_count_value # "alb.ingress.kubernetes.io/healthy-threshold-count"     = 2
+      "${var.kubernetes_ingress_v1_argocd_ingress_annotations_unhealthy_threshold_count}" = var.kubernetes_ingress_v1_argocd_ingress_annotations_unhealthy_threshold_count_value # "alb.ingress.kubernetes.io/unhealthy-threshold-count"   = 2
+      # "alb.ingress.kubernetes.io/listen-ports"       = "[{\"HTTP\":80}]"
+      # "alb.ingress.kubernetes.io/ssl-passthrough" = "true"
+    #   "alb.ingress.kubernetes.io/subnets" = jsonencode([
+    #   "subnet-0bbe2c7b0fb37f7c3",
+    #   "subnet-01a4685a9d3144fa3",
+    # ])
+     }
+  }
+
+   spec {
+    ingress_class_name = var.kubernetes_ingress_v1_argocd_ingress_annotations_ingress_class_name # "alb" # Ingress Class            
+    default_backend {
+      service {
+        name = var.kubernetes_ingress_v1_argocd_ingress_spec_default_backend_service_name # "argocd-server"
+        port {
+          number = var.kubernetes_ingress_v1_argocd_ingress_spec_default_backend_service_port # 80
+        }
+      }
+    }
+    
+    tls {
+      secret_name = var.kubernetes_ingress_v1_argocd_ingress_tls_secret_name # "argocd-secret"
+    }
+  }
+}
+
+# # security groups associated to delete
+# resource "aws_security_group" "deleted" {
+#   count = length(data.aws_security_groups.filtered.ids) + length(data.aws_security_groups.filtered_shared.ids)
+#   # depends_on = [
+#   #   kubernetes_ingress_v1.argocd_ingress,
+#   #   var.kubernetes_ingress_v1_destroyed ? null : aws_security_group.deleted[count.index]
+#   # ]
+#   # Delete the security groups filtered by tag description
+#   provisioner "local-exec" {
+#     command = "aws ec2 delete-security-group --group-id ${concat(data.aws_security_groups.filtered.ids, data.aws_security_groups.filtered_shared.ids)[count.index]}"
+#   }
+
+#   # Add a lifecycle dependency to trigger this resource only when the specified kubernetes_ingress_v1 resource is not destroyed
+#   lifecycle {
+#     ignore_changes = [count]
+#   }
+# }
