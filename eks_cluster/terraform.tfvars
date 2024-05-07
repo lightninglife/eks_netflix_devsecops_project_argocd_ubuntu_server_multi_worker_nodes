@@ -18,7 +18,7 @@ port_9443               = 9443
 port_3306               = 3306
 security_group_protocol = "tcp"
 web_cidr                = "0.0.0.0/0"
-private_ip_address      = "70.51.61.104/32"
+private_ip_address      = "<your-local-ip-address>/32"
 private_subnet          = "10.0.0.0/16"
 
 # vpc
